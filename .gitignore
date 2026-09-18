@@ -1,10 +1,11 @@
 .venv/
 __pycache__/
-.pytest_cache/
-.ruff_cache/
 *.pyc
-.DS_Store
-
-# Do not commit raw market/factor data.
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+*.egg-info/
 data/*.csv
-data/*.parquet
+data/*.zip
+results/reproduced/
