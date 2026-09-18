@@ -105,9 +105,7 @@ def fit_grid(
         gaussian.smoothed.argmax(axis=1), student_smoothed.argmax(axis=1)
     )
 
-    style_agreement = chain_agreement(
-        frame, ["HML", "MOM"], seed + 500, n_init, max_iter
-    )
+    style_agreement = chain_agreement(frame, ["HML", "MOM"], seed + 500, n_init, max_iter)
     structure_agreement = chain_agreement(
         frame, ["SMB", "RMW", "CMA"], seed + 700, n_init, max_iter
     )
@@ -129,17 +127,13 @@ def fit_grid(
             {
                 "metric": "gaussian_BIC_preferred_K",
                 "value": int(
-                    selection.query("family == 'gaussian'")
-                    .sort_values("BIC")
-                    .iloc[0]["K"]
+                    selection.query("family == 'gaussian'").sort_values("BIC").iloc[0]["K"]
                 ),
             },
             {
                 "metric": "student_t_BIC_preferred_K",
                 "value": int(
-                    selection.query("family == 'student_t'")
-                    .sort_values("BIC")
-                    .iloc[0]["K"]
+                    selection.query("family == 'student_t'").sort_values("BIC").iloc[0]["K"]
                 ),
             },
         ]
@@ -152,9 +146,7 @@ def chain_agreement(
     frame: pd.DataFrame, columns: list[str], seed: int, n_init: int, max_iter: int
 ) -> float:
     x, raw_mean, raw_std = standardize(frame, columns)
-    gaussian = fit_hmm(
-        x, 2, "gaussian", n_init=n_init, max_iter=max_iter, random_state=seed
-    )
+    gaussian = fit_hmm(x, 2, "gaussian", n_init=n_init, max_iter=max_iter, random_state=seed)
     student = fit_hmm(
         x,
         2,
@@ -182,9 +174,7 @@ def main() -> None:
 
     frame = validate_data(pd.read_csv(args.csv))
     args.output.mkdir(parents=True, exist_ok=True)
-    summary = fit_grid(
-        frame, args.output, args.seed, args.n_init, args.max_iter
-    )
+    summary = fit_grid(frame, args.output, args.seed, args.n_init, args.max_iter)
     print(summary.to_string(index=False))
 
 

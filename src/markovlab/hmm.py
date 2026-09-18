@@ -134,11 +134,7 @@ def _log_student_t_emission(
     n_states = len(means)
     out = np.empty((n_obs, n_states))
     delta = np.empty((n_obs, n_states))
-    const = (
-        gammaln((nu + dim) / 2.0)
-        - gammaln(nu / 2.0)
-        - 0.5 * dim * np.log(nu * np.pi)
-    )
+    const = gammaln((nu + dim) / 2.0) - gammaln(nu / 2.0) - 0.5 * dim * np.log(nu * np.pi)
 
     for k in range(n_states):
         chol, lower = cho_factor(scales[k], lower=True, check_finite=True)
@@ -257,9 +253,7 @@ def _initialize(
             state_cov = global_cov
         else:
             state_cov = np.atleast_2d(np.cov(members, rowvar=False))
-        scales[k] = _regularize_covariance(
-            state_cov, covariance_shrinkage, min_covar
-        )
+        scales[k] = _regularize_covariance(state_cov, covariance_shrinkage, min_covar)
 
     if n_states == 1:
         transition = np.ones((1, 1))
@@ -339,8 +333,6 @@ def fit_hmm(
                     converged = True
                     break
 
-            # On the final allowed iteration, return the coherent E-step above
-            # rather than performing an M-step that is not followed by re-evaluation.
             if iteration == max_iter:
                 break
 
