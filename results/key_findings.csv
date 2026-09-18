@@ -1,0 +1,12 @@
+category,metric,value,interpretation
+robustness,monolithic_3state_gaussian_vs_t_agreement,0.298,Original 3-state architecture is fragile
+robustness,style_chain_gaussian_vs_t_agreement,0.994,HML/MOM latent process is highly robust
+robustness,structure_chain_gaussian_vs_t_agreement,0.774,Structural factor chain is moderately robust
+model_selection,gaussian_bic_best_K,2,BIC prefers two monolithic states
+model_selection,student_t_bic_best_K,2,BIC prefers two monolithic states
+economics,stress_reversal_mean_mkt_pct_month,-2.603,Value/reversal plus quality is adverse
+economics,stress_reversal_mkt_vol_pct_month,9.180,Adverse state has high market volatility
+economics,cyclical_rebound_mean_mkt_gaussian_pct_month,1.759,Value reversal can be a healthy rebound
+economics,cyclical_rebound_mean_mkt_student_t_pct_month,1.242,Positive-return result survives heavy-tail specification
+forecasting,full_hierarchy_oos_log_loss,1.126,Hierarchy did not improve next-month factor-state forecasts
+forecasting,static_markov_oos_log_loss,1.066,Simple benchmark beat hierarchical extensions

@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+.DS_Store
+
+# Do not commit raw market/factor data.
+data/*.csv
+data/*.parquet
