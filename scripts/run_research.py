@@ -198,9 +198,7 @@ def fit_grid(
         n_init,
         max_iter,
     )
-    alignment_rows.extend(
-        agreement_rows("style_2state", style_g, style_t, style_mean, style_std)
-    )
+    alignment_rows.extend(agreement_rows("style_2state", style_g, style_t, style_mean, style_std))
 
     structure_g, structure_t, structure_mean, structure_std = fit_chain(
         frame,
