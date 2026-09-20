@@ -17,7 +17,9 @@ from scipy.optimize import linear_sum_assignment
 AlignmentMetric = Literal["symmetric_kl", "bhattacharyya", "wasserstein"]
 
 
-def _validate_means(reference_means: np.ndarray, candidate_means: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def _validate_means(
+    reference_means: np.ndarray, candidate_means: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
     reference = np.asarray(reference_means, dtype=float)
     candidate = np.asarray(candidate_means, dtype=float)
     if reference.ndim != 2 or candidate.ndim != 2:
@@ -62,11 +64,7 @@ def _gaussian_kl(
     delta = mean_b - mean_a
     quadratic = float(delta @ cho_solve(chol_b, delta, check_finite=True))
     return 0.5 * (
-        trace_term
-        + quadratic
-        - dimension
-        + _logdet_spd(covariance_b)
-        - _logdet_spd(covariance_a)
+        trace_term + quadratic - dimension + _logdet_spd(covariance_b) - _logdet_spd(covariance_a)
     )
 
 
@@ -93,8 +91,7 @@ def _bhattacharyya(
     delta = mean_b - mean_a
     quadratic = float(delta @ cho_solve(chol_pooled, delta, check_finite=True))
     determinant_term = 0.5 * (
-        _logdet_spd(pooled)
-        - 0.5 * (_logdet_spd(covariance_a) + _logdet_spd(covariance_b))
+        _logdet_spd(pooled) - 0.5 * (_logdet_spd(covariance_a) + _logdet_spd(covariance_b))
     )
     return 0.125 * quadratic + determinant_term
 
@@ -116,8 +113,7 @@ def _wasserstein(
     root_b = _spd_sqrt(covariance_b)
     middle_root = _spd_sqrt(root_b @ covariance_a @ root_b)
     squared = float(
-        np.sum((mean_a - mean_b) ** 2)
-        + np.trace(covariance_a + covariance_b - 2.0 * middle_root)
+        np.sum((mean_a - mean_b) ** 2) + np.trace(covariance_a + covariance_b - 2.0 * middle_root)
     )
     return float(np.sqrt(max(squared, 0.0)))
 
@@ -137,8 +133,12 @@ def distribution_distance_matrix(
     passing finite covariance matrices yields a moment-matched Gaussian proxy.
     """
     reference, candidate = _validate_means(reference_means, candidate_means)
-    reference_cov = _validate_covariances(reference_covariances, reference.shape, "reference_covariances")
-    candidate_cov = _validate_covariances(candidate_covariances, candidate.shape, "candidate_covariances")
+    reference_cov = _validate_covariances(
+        reference_covariances, reference.shape, "reference_covariances"
+    )
+    candidate_cov = _validate_covariances(
+        candidate_covariances, candidate.shape, "candidate_covariances"
+    )
 
     functions = {
         "symmetric_kl": _symmetric_kl,
