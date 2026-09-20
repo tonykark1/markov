@@ -13,12 +13,23 @@ from .first_passage import (
     mixture_first_passage_probability,
 )
 from .hmm import HMMFit, fit_hmm
+from .inference import HMMInference, forecast_state_probabilities, infer_hmm
+from .parallel import joint_probabilities, joint_state_labels, joint_transition
+from .walkforward import WalkForwardResult, expanding_walk_forward
 
 __all__ = [
     "HMMFit",
+    "HMMInference",
+    "WalkForwardResult",
     "fit_hmm",
+    "infer_hmm",
+    "forecast_state_probabilities",
+    "expanding_walk_forward",
     "align_by_mean_distance",
     "reorder_states",
+    "joint_probabilities",
+    "joint_transition",
+    "joint_state_labels",
     "normalized_entropy",
     "hard_state_agreement",
     "model_disagreement",

@@ -20,7 +20,7 @@ This project started with a conventional multivariate HMM on **SMB, HML, RMW, CM
 
 The main result is **not** that a particular HMM predicts crashes. It is that the original monolithic regime story is fragile, while a simpler decomposition into separate style and structural latent chains is materially more robust.
 
-> Terminology note: this repository does **not** claim to implement a classical joint factorial HMM. The current architecture fits separate latent chains and combines their state interpretations. A true factorial HMM would require joint latent-state inference and a joint likelihood.
+> Terminology note: this repository does **not** claim to implement a classical joint factorial HMM. The current architecture fits separate latent chains and can combine their probabilities and transition matrices under an explicit independence assumption. A true factorial HMM would require joint latent-state inference and a joint likelihood.
 
 ## Headline findings
 
@@ -36,11 +36,25 @@ The main result is **not** that a particular HMM predicts crashes. It is that th
 
 A useful lesson is that **posterior state confidence is not the same as model confidence**. A single HMM can be highly certain about its state while equally defensible specifications disagree about the state architecture itself.
 
+## What changed in v0.3
+
+The package now supports genuinely real-time evaluation rather than only in-sample fitting:
+
+- `infer_hmm()` evaluates new observations under fixed fitted parameters;
+- continuation mode initializes new observations from the last in-sample filtered state;
+- `forecast_state_probabilities()` propagates current state uncertainty through the transition matrix;
+- `expanding_walk_forward()` performs strict training-window-only standardization and refits before every OOS observation;
+- walk-forward states are Hungarian-aligned across refits in the original data scale;
+- `joint_probabilities()` and `joint_transition()` make the parallel-chain independence assumption explicit and testable;
+- `scripts/run_walkforward.py` writes OOS predicted and filtered state probabilities directly from a factor CSV.
+
+These additions close an important reproducibility gap: the repo can now demonstrate the distinction between **smoothed historical interpretation** and **real-time walk-forward inference** in code.
+
 ## What changed in v0.2
 
 The public implementation was hardened after an adversarial code review:
 
-- `filtered` now truly means `P(S_t | Y_1:t)`;
+- `filtered` truly means `P(S_t | Y_1:t)`;
 - `smoothed` is exposed separately as `P(S_t | Y_1:T)`;
 - `predicted` exposes the one-step prior before observing `Y_t`;
 - EM returns parameters and state probabilities from the same final E-step;
@@ -59,18 +73,16 @@ The public implementation was hardened after an adversarial code review:
 ```python
 import numpy as np
 from markovlab.hmm import fit_hmm
+from markovlab.inference import infer_hmm
 
 X = np.random.default_rng(7).normal(size=(240, 2))
-fit = fit_hmm(X, n_states=2, family="student_t", nu=5, random_state=7)
+fit = fit_hmm(X[:200], n_states=2, family="student_t", nu=5, random_state=7)
 
-# Real-time state probability conditional on fitted parameters
-filtered_now = fit.filtered[-1]
+# Real-time inference on observations that arrive after the fitted sample.
+new = infer_hmm(fit, X[200:205], continuation=True)
 
-# Uses future observations relative to each historical t
-smoothed_history = fit.smoothed
-
-# One-step prior before seeing the current observation
-predicted_now = fit.predicted[-1]
+filtered_now = new.filtered[-1]
+predicted_before_observation = new.predicted[-1]
 ```
 
 For Student-t emissions, `fit.scale_matrices` stores the distribution's scale matrices. `fit.covariances` returns the corresponding covariance matrices:
@@ -78,6 +90,59 @@ For Student-t emissions, `fit.scale_matrices` stores the distribution's scale ma
 \[
 \operatorname{Cov}(X) = \frac{\nu}{\nu-2}\Sigma, \qquad \nu>2.
 \]
+
+## Strict walk-forward evaluation
+
+For a methodology-first real-time experiment:
+
+```python
+from markovlab.walkforward import expanding_walk_forward
+
+result = expanding_walk_forward(
+    X,
+    initial_train=72,
+    n_states=2,
+    family="student_t",
+    random_state=42,
+)
+
+# One-step prior before seeing each OOS observation.
+result.predicted
+
+# Posterior after seeing only that OOS observation, never future rows.
+result.filtered
+```
+
+Every OOS date is standardized using **only observations available before that date**. The model is re-estimated before every OOS row. This is intentionally slower than a production implementation because it makes the information set unambiguous.
+
+The same experiment can be run from the command line:
+
+```bash
+python scripts/run_walkforward.py data/my_factors.csv \
+  --columns HML,MOM \
+  --initial-train 72 \
+  --states 2 \
+  --family student_t \
+  --output results/walkforward_style.csv
+```
+
+## Parallel latent chains
+
+The robust research result separates style and structure:
+
+- **Style:** `Momentum-led <-> Value/reversal` using HML and MOM.
+- **Structure:** `Quality/investment <-> Small/cyclical` using SMB, RMW, and CMA.
+
+The code does not hide the assumption used to combine these separately fitted chains:
+
+```python
+from markovlab.parallel import joint_probabilities, joint_transition
+
+joint_posterior = joint_probabilities(style_probs, structure_probs)
+joint_P = joint_transition(style_transition, structure_transition)
+```
+
+Those operations are valid only under the stated independence approximation. If the chains interact materially, a true factorial or coupled HMM is required.
 
 ## Reproduce the core factor robustness result
 
@@ -100,7 +165,7 @@ The script produces:
 - aligned HML/MOM two-state style-chain agreement;
 - aligned SMB/RMW/CMA two-state structural-chain agreement.
 
-This script is intentionally a **full-sample robustness replication**, not a walk-forward trading backtest. Real-time claims require training-window-only standardization and refitting.
+This script is intentionally a **full-sample robustness replication**, not a walk-forward trading backtest. Use `run_walkforward.py` for real-time state evaluation.
 
 ## Research story
 
@@ -114,12 +179,7 @@ Changing only the emission distribution from Gaussian to Student-t causes the mo
 
 ### 3. Decompose the latent process
 
-Instead of forcing every factor into one hidden state, estimate separate chains:
-
-- **Style:** `Momentum-led <-> Value/reversal` using HML and MOM.
-- **Structure:** `Quality/investment <-> Small/cyclical` using SMB, RMW, and CMA.
-
-The style chain is highly robust to the emission assumption. The economically adverse combination is specifically:
+Instead of forcing every factor into one hidden state, estimate separate chains. The style chain is highly robust to the emission assumption. The economically adverse combination is specifically:
 
 `Value/reversal + Quality/investment`
 
@@ -148,13 +208,17 @@ These are research findings, not hidden implementation failures.
 ```text
 .
 ├── src/markovlab/
-│   ├── hmm.py              # Gaussian / Student-t HMM with predicted/filtered/smoothed states
+│   ├── hmm.py              # Gaussian / Student-t HMM estimation
+│   ├── inference.py        # fixed-parameter OOS filtering and state forecasts
+│   ├── walkforward.py      # strict expanding-window real-time evaluation
+│   ├── parallel.py         # explicit independent-chain joint probabilities/transitions
 │   ├── alignment.py        # Hungarian state-label alignment
 │   ├── diagnostics.py      # entropy, agreement, durations, model disagreement
 │   └── first_passage.py    # hitting-time / first-passage utilities
 ├── scripts/
-│   └── run_research.py     # core robustness replication pipeline
-├── tests/                  # numerical and edge-case tests
+│   ├── run_research.py     # full-sample robustness replication
+│   └── run_walkforward.py  # leakage-resistant OOS state probabilities
+├── tests/                  # numerical, semantic, edge-case, and no-leakage tests
 ├── docs/
 │   └── research_note.md
 ├── results/
@@ -178,11 +242,12 @@ pytest
 - Use **filtered / predicted** probabilities for real-time claims; smoothed probabilities use future data.
 - Standardize using training-window statistics only in OOS work.
 - Treat economic state names as post-hoc labels, not model primitives.
-- Align states before comparing specifications; labels are arbitrary.
+- Align states before comparing specifications or refits; labels are arbitrary.
 - Report state uncertainty **and** specification/model uncertainty separately.
 - Inspect convergence and multiple random starts; EM can settle at local maxima.
 - Compare against simple Markov and persistence benchmarks.
 - Treat first-passage probabilities as model-conditional, especially for rare states.
+- Treat parallel-chain joint probabilities as an independence approximation, not a joint-likelihood result.
 - Prefer negative OOS results over post-hoc storytelling.
 
 ## Current conclusion
