@@ -2,6 +2,8 @@ category,metric,value,interpretation
 robustness,monolithic_3state_gaussian_vs_t_agreement,0.298,Original 3-state architecture is fragile
 robustness,style_chain_gaussian_vs_t_agreement,0.994,HML/MOM latent process is highly robust
 robustness,structure_chain_gaussian_vs_t_agreement,0.774,Structural factor chain is moderately robust
+robustness,style_chain_alignment_metric_sensitivity,0.994,Agreement is unchanged under mean/symmetric-KL/Bhattacharyya/Wasserstein matching
+robustness,structure_chain_alignment_metric_sensitivity,0.774,Structural-chain agreement is unchanged under the four matching rules
 model_selection,gaussian_bic_best_K,2,BIC prefers two monolithic states
 model_selection,student_t_bic_best_K,2,BIC prefers two monolithic states
 economics,stress_reversal_mean_mkt_pct_month,-2.603,Value/reversal plus quality is adverse

@@ -30,6 +30,12 @@ def main() -> None:
     parser.add_argument("--n-init", type=int, default=4)
     parser.add_argument("--max-iter", type=int, default=120)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--alignment-metric",
+        choices=["mean", "symmetric_kl", "bhattacharyya", "wasserstein"],
+        default="symmetric_kl",
+        help="state-label alignment across refits",
+    )
     parser.add_argument("--output", type=Path, default=Path("results/walkforward_states.csv"))
     args = parser.parse_args()
 
@@ -59,6 +65,7 @@ def main() -> None:
         n_init=args.n_init,
         max_iter=args.max_iter,
         random_state=args.seed,
+        alignment_metric=args.alignment_metric,
     )
 
     out = pd.DataFrame({"date": frame.loc[result.oos_index, "date"].to_numpy()})
@@ -67,6 +74,7 @@ def main() -> None:
         out[f"filt_state_{state}"] = result.filtered[:, state]
     out["fit_converged"] = result.converged
     out["train_loglik"] = result.train_loglik
+    out["alignment_metric"] = result.alignment_metric
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     out.to_csv(args.output, index=False)

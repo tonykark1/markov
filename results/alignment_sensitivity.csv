@@ -1,0 +1,9 @@
+system,alignment_metric,agreement
+style_2state,mean,0.9940476190
+style_2state,symmetric_kl,0.9940476190
+style_2state,bhattacharyya,0.9940476190
+style_2state,wasserstein,0.9940476190
+structure_2state,mean,0.7738095238
+structure_2state,symmetric_kl,0.7738095238
+structure_2state,bhattacharyya,0.7738095238
+structure_2state,wasserstein,0.7738095238
