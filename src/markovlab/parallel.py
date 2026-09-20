@@ -41,8 +41,7 @@ def joint_probabilities(*chains: np.ndarray) -> np.ndarray:
         raise ValueError("at least two latent chains are required")
 
     normalized = [
-        _validate_probability_matrix(chain, name=f"chain[{i}]")
-        for i, chain in enumerate(chains)
+        _validate_probability_matrix(chain, name=f"chain[{i}]") for i, chain in enumerate(chains)
     ]
     n_obs = normalized[0].shape[0]
     if any(chain.shape[0] != n_obs for chain in normalized[1:]):
