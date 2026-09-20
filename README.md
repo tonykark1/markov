@@ -36,6 +36,23 @@ The main result is **not** that a particular HMM predicts crashes. It is that th
 
 A useful lesson is that **posterior state confidence is not the same as model confidence**. A single HMM can be highly certain about its state while equally defensible specifications disagree about the state architecture itself.
 
+## What changed in v0.4
+
+State alignment now uses the whole first-two-moment state geometry rather than only expected factor returns.
+
+- `align_by_distribution_distance()` performs Hungarian matching using **symmetric KL**, **Bhattacharyya**, or **2-Wasserstein** distance;
+- Gaussian comparisons are distribution-level comparisons using state means and covariance matrices;
+- Student-t comparisons use the finite covariance implied by the fitted scale matrix and `nu`, so the cross-family comparison is explicitly a **moment-matched Gaussian proxy** rather than a falsely claimed exact Student-t KL;
+- the walk-forward engine defaults to covariance-aware `symmetric_kl` alignment across refits;
+- `mean` alignment remains available as a benchmark;
+- `scripts/run_research.py` now writes `alignment_sensitivity.csv` so matching-rule dependence is visible rather than hidden;
+- `scripts/run_walkforward.py` exposes `--alignment-metric`;
+- walk-forward results retain aligned state covariance matrices as well as aligned means.
+
+The stricter test matters because two regimes can have similar mean factor returns but radically different volatility and correlation structure. In the frozen 2004-2017 factor experiment, **all four alignment rules selected the same Gaussian-vs-Student-t mapping for the HML/MOM style chain**, so the **99.4% style-chain agreement survives covariance-aware state matching**. The structural-chain agreement likewise remains about **77.4%** under all four rules.
+
+That makes the style result harder to dismiss as a label-matching artifact.
+
 ## What changed in v0.3
 
 The package now supports genuinely real-time evaluation rather than only in-sample fitting:
@@ -103,6 +120,7 @@ result = expanding_walk_forward(
     initial_train=72,
     n_states=2,
     family="student_t",
+    alignment_metric="symmetric_kl",
     random_state=42,
 )
 
@@ -123,8 +141,33 @@ python scripts/run_walkforward.py data/my_factors.csv \
   --initial-train 72 \
   --states 2 \
   --family student_t \
+  --alignment-metric symmetric_kl \
   --output results/walkforward_style.csv
 ```
+
+## Distribution-aware state alignment
+
+State labels are arbitrary. Comparing state 0 from one fit with state 0 from another fit is meaningless until the states are aligned.
+
+```python
+from markovlab.alignment import align_by_distribution_distance
+
+order = align_by_distribution_distance(
+    reference_means,
+    reference_covariances,
+    candidate_means,
+    candidate_covariances,
+    metric="symmetric_kl",
+)
+```
+
+The available covariance-aware metrics are:
+
+- `symmetric_kl` — symmetric Gaussian KL divergence;
+- `bhattacharyya` — Bhattacharyya distance;
+- `wasserstein` — Gaussian 2-Wasserstein distance.
+
+Mean-only Euclidean alignment is retained through `align_by_mean_distance()` for sensitivity analysis.
 
 ## Parallel latent chains
 
@@ -161,9 +204,11 @@ python scripts/run_research.py data/my_factors.csv --output results/reproduced
 The script produces:
 
 - Gaussian vs Student-t model selection for `K = 2, 3, 4`;
+- Gaussian-vs-Student-t agreement under mean, symmetric-KL, Bhattacharyya, and Wasserstein alignment;
 - aligned monolithic 3-state agreement;
 - aligned HML/MOM two-state style-chain agreement;
-- aligned SMB/RMW/CMA two-state structural-chain agreement.
+- aligned SMB/RMW/CMA two-state structural-chain agreement;
+- `alignment_sensitivity.csv`, including the state permutation selected by each metric.
 
 This script is intentionally a **full-sample robustness replication**, not a walk-forward trading backtest. Use `run_walkforward.py` for real-time state evaluation.
 
@@ -185,7 +230,13 @@ Instead of forcing every factor into one hidden state, estimate separate chains.
 
 rather than "value reversal" in general.
 
-### 4. Ask decision-oriented questions
+### 4. Attack the label alignment too
+
+Do not assume a robustness result is real merely because one matching heuristic says so. Re-run the state assignment using mean-only, symmetric-KL, Bhattacharyya, and Wasserstein matching.
+
+For the HML/MOM style chain, the same mapping is selected under all four rules in the frozen experiment, so its 99.4% agreement survives this stricter attack.
+
+### 5. Ask decision-oriented questions
 
 The repo includes first-passage utilities for questions such as:
 
@@ -212,17 +263,18 @@ These are research findings, not hidden implementation failures.
 │   ├── inference.py        # fixed-parameter OOS filtering and state forecasts
 │   ├── walkforward.py      # strict expanding-window real-time evaluation
 │   ├── parallel.py         # explicit independent-chain joint probabilities/transitions
-│   ├── alignment.py        # Hungarian state-label alignment
+│   ├── alignment.py        # mean and distribution-aware Hungarian state alignment
 │   ├── diagnostics.py      # entropy, agreement, durations, model disagreement
 │   └── first_passage.py    # hitting-time / first-passage utilities
 ├── scripts/
-│   ├── run_research.py     # full-sample robustness replication
+│   ├── run_research.py     # full-sample robustness + alignment sensitivity
 │   └── run_walkforward.py  # leakage-resistant OOS state probabilities
 ├── tests/                  # numerical, semantic, edge-case, and no-leakage tests
 ├── docs/
 │   └── research_note.md
 ├── results/
-│   └── key_findings.csv
+│   ├── key_findings.csv
+│   └── alignment_sensitivity.csv
 ├── data/
 │   └── README.md
 └── .github/workflows/ci.yml
@@ -243,6 +295,7 @@ pytest
 - Standardize using training-window statistics only in OOS work.
 - Treat economic state names as post-hoc labels, not model primitives.
 - Align states before comparing specifications or refits; labels are arbitrary.
+- Check whether conclusions survive **multiple alignment metrics**, not only one label-matching rule.
 - Report state uncertainty **and** specification/model uncertainty separately.
 - Inspect convergence and multiple random starts; EM can settle at local maxima.
 - Compare against simple Markov and persistence benchmarks.
