@@ -62,9 +62,11 @@ def _pca_portfolio_weights(
     order = np.argsort(eigenvalues)[::-1]
     eigenvalues = np.maximum(eigenvalues[order], 0.0)
     eigenvectors = eigenvectors[:, order]
+    full_total = float(eigenvalues.sum())
 
     k = min(max_components, eigenvectors.shape[1])
     loadings = eigenvectors[:, :k]
+    selected_eigenvalues = eigenvalues[:k]
     if mode == "correlation":
         raw_weights = loadings / scale[:, None]
     else:
@@ -73,13 +75,15 @@ def _pca_portfolio_weights(
     gross = np.abs(raw_weights).sum(axis=0)
     valid = gross > 0
     raw_weights = raw_weights[:, valid]
-    eigenvalues = eigenvalues[:k][valid]
+    selected_eigenvalues = selected_eigenvalues[valid]
     gross = gross[valid]
     weights = raw_weights / gross
 
-    total_variance = float(eigenvalues.sum())
-    full_total = float(np.maximum(np.linalg.eigvalsh(covariance), 0.0).sum())
-    explained = eigenvalues / full_total if full_total > 0 else np.full(len(eigenvalues), np.nan)
+    explained = (
+        selected_eigenvalues / full_total
+        if full_total > 0
+        else np.full(len(selected_eigenvalues), np.nan)
+    )
     return weights, explained, active
 
 
