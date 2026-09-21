@@ -33,7 +33,9 @@ def download_panel(*, min_months: int = 120) -> tuple[pd.DataFrame, pd.DataFrame
     ports = source.dl_port("op", "pandas")
     signal_doc = source.dl_signal_doc("pandas")
 
-    ls = ports.loc[ports["port"].astype(str).str.upper() == "LS", ["signalname", "date", "ret"]].copy()
+    ls = ports.loc[
+        ports["port"].astype(str).str.upper() == "LS", ["signalname", "date", "ret"]
+    ].copy()
     ls["date"] = pd.to_datetime(ls["date"])
     ls["ret"] = pd.to_numeric(ls["ret"], errors="coerce") / 100.0
     ls = ls.dropna(subset=["ret"])
