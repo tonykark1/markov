@@ -16,7 +16,12 @@ def _panel() -> pd.DataFrame:
     dates = pd.period_range("2000-01", periods=48, freq="M").to_timestamp("M")
     rows = []
     rng = np.random.default_rng(7)
-    for factor, base in (("VALUE", 0.008), ("QUALITY", 0.006), ("SIZE", -0.004), ("INVEST", -0.003)):
+    for factor, base in (
+        ("VALUE", 0.008),
+        ("QUALITY", 0.006),
+        ("SIZE", -0.004),
+        ("INVEST", -0.003),
+    ):
         state = 1.0
         for i, date in enumerate(dates):
             if i in {16, 31}:
