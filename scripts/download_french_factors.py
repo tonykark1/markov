@@ -17,16 +17,11 @@ FF5_URL = (
     "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/"
     "F-F_Research_Data_5_Factors_2x3_CSV.zip"
 )
-MOM_URL = (
-    "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/"
-    "F-F_Momentum_Factor_CSV.zip"
-)
+MOM_URL = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Momentum_Factor_CSV.zip"
 
 
 def _download_csv_text(url: str) -> str:
-    request = urllib.request.Request(
-        url, headers={"User-Agent": "markovlab-factor-momentum/1.0"}
-    )
+    request = urllib.request.Request(url, headers={"User-Agent": "markovlab-factor-momentum/1.0"})
     with urllib.request.urlopen(request, timeout=60) as response:
         payload = response.read()
     with zipfile.ZipFile(io.BytesIO(payload)) as archive:
@@ -43,9 +38,7 @@ def _monthly_rows(text: str, value_names: list[str]) -> pd.DataFrame:
             continue
         date = row[0].strip()
         if re.fullmatch(r"\d{6}", date) and len(row) >= len(value_names) + 1:
-            rows.append(
-                [date, *[cell.strip() for cell in row[1 : len(value_names) + 1]]]
-            )
+            rows.append([date, *[cell.strip() for cell in row[1 : len(value_names) + 1]]])
     if not rows:
         raise RuntimeError("could not identify monthly factor rows")
     frame = pd.DataFrame(rows, columns=["date", *value_names])
@@ -69,9 +62,7 @@ def download_french_factors() -> pd.DataFrame:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--output", type=Path, default=Path("data/french_factors_current.csv")
-    )
+    parser.add_argument("--output", type=Path, default=Path("data/french_factors_current.csv"))
     args = parser.parse_args()
 
     frame = download_french_factors()
