@@ -14,17 +14,23 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.10"
       - run: python -m pip install --upgrade pip
-      - run: pip install -e .
-      - name: Download current Kenneth French factors
-        run: python scripts/download_french_factors.py --output data/french_factors_current.csv
-      - name: Run factor-momentum suite
+      - run: pip install -e . openassetpricing
+      - name: Download broad non-momentum factor panel
         run: >-
-          python scripts/run_factor_momentum.py
-          data/french_factors_current.csv
-          --output results/factor_momentum
+          python scripts/download_openap_factor_panel.py
+          --output data/openap_nonmomentum_factors.csv
+          --metadata data/openap_nonmomentum_factor_metadata.csv
+          --min-months 120
+      - name: Run paper-style factor momentum tests
+        run: >-
+          python scripts/run_factor_momentum_panel.py
+          data/openap_nonmomentum_factors.csv
+          --output results/factor_momentum_broad
       - uses: actions/upload-artifact@v4
         with:
-          name: factor-momentum-results
-          path: results/factor_momentum/
+          name: factor-momentum-broad-results
+          path: |
+            results/factor_momentum_broad/
+            data/openap_nonmomentum_factor_metadata.csv
