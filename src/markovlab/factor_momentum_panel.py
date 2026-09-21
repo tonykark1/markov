@@ -56,7 +56,9 @@ def add_trailing_factor_signal(panel: pd.DataFrame, *, lookback: int = 12) -> pd
         indexed.index.name = "date"
         pieces.append(indexed.reset_index())
 
-    return pd.concat(pieces, ignore_index=True).sort_values(["date", "factor"]).reset_index(drop=True)
+    return (
+        pd.concat(pieces, ignore_index=True).sort_values(["date", "factor"]).reset_index(drop=True)
+    )
 
 
 def paper_style_factor_momentum(panel: pd.DataFrame, *, lookback: int = 12) -> pd.DataFrame:
@@ -103,7 +105,9 @@ def _clustered_dummy_regression(
 def pooled_conditional_test(panel: pd.DataFrame, *, lookback: int = 12) -> dict[str, float | int]:
     """Paper-style pooled conditional-return test clustered by calendar month."""
     aligned = add_trailing_factor_signal(panel, lookback=lookback)
-    valid = aligned[aligned["ret"].notna() & aligned["signal"].notna() & (aligned["signal"] != 0)].copy()
+    valid = aligned[
+        aligned["ret"].notna() & aligned["signal"].notna() & (aligned["signal"] != 0)
+    ].copy()
     if len(valid) < 3:
         raise ValueError("not enough valid observations for pooled test")
 
@@ -135,7 +139,9 @@ def factor_level_conditional_table(panel: pd.DataFrame, *, lookback: int = 12) -
     aligned = add_trailing_factor_signal(panel, lookback=lookback)
     rows: list[dict[str, float | int | str]] = []
     for factor, group in aligned.groupby("factor"):
-        valid = group[group["ret"].notna() & group["signal"].notna() & (group["signal"] != 0)].copy()
+        valid = group[
+            group["ret"].notna() & group["signal"].notna() & (group["signal"] != 0)
+        ].copy()
         if valid.empty:
             continue
         positive = valid.loc[valid["signal"] > 0, "ret"]
@@ -149,7 +155,9 @@ def factor_level_conditional_table(panel: pd.DataFrame, *, lookback: int = 12) -
                 "mean_after_positive": float(positive.mean()) if len(positive) else np.nan,
                 "mean_after_negative": float(negative.mean()) if len(negative) else np.nan,
                 "positive_minus_negative": (
-                    float(positive.mean() - negative.mean()) if len(positive) and len(negative) else np.nan
+                    float(positive.mean() - negative.mean())
+                    if len(positive) and len(negative)
+                    else np.nan
                 ),
                 "timed_mean": float(timed.mean()),
                 "timed_hac_t": t_stat,
@@ -192,5 +200,12 @@ def subperiod_factor_momentum(panel: pd.DataFrame, *, lookback: int = 12) -> pd.
         ("second_half", monthly[monthly["date"] >= midpoint]),
     ):
         stats = evaluate_strategy(subset["strategy_return"])
-        rows.append({"period": label, "start": str(subset["date"].min()), "end": str(subset["date"].max()), **asdict(stats)})
+        rows.append(
+            {
+                "period": label,
+                "start": str(subset["date"].min()),
+                "end": str(subset["date"].max()),
+                **asdict(stats),
+            }
+        )
     return pd.DataFrame(rows)
