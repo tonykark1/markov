@@ -73,7 +73,16 @@ def main() -> None:
     print("\n12-month subperiod stability:")
     print(
         subperiod[
-            ["period", "start", "end", "n_months", "annualized_return", "sharpe", "hac_t_stat", "hac_p_value"]
+            [
+                "period",
+                "start",
+                "end",
+                "n_months",
+                "annualized_return",
+                "sharpe",
+                "hac_t_stat",
+                "hac_p_value",
+            ]
         ].to_string(index=False, float_format=lambda value: f"{value: .4f}")
     )
 
