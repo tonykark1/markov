@@ -23,6 +23,7 @@ jobs:
           --output data/openap_nonmomentum_factors.csv
           --metadata data/openap_nonmomentum_factor_metadata.csv
           --min-months 120
+          --release 202410
       - name: Run paper-style factor momentum tests
         run: >-
           python scripts/run_factor_momentum_panel.py
