@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download and merge the current Kenneth French monthly FF5 and momentum factors."""
+"""Download current Kenneth French five-factor data for a small sanity check."""
 
 from __future__ import annotations
 
@@ -17,7 +17,6 @@ FF5_URL = (
     "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/"
     "F-F_Research_Data_5_Factors_2x3_CSV.zip"
 )
-MOM_URL = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Momentum_Factor_CSV.zip"
 
 
 def _download_csv_text(url: str) -> str:
@@ -53,11 +52,9 @@ def download_french_factors() -> pd.DataFrame:
         _download_csv_text(FF5_URL),
         ["MKT", "SMB", "HML", "RMW", "CMA", "RF"],
     )
-    mom = _monthly_rows(_download_csv_text(MOM_URL), ["MOM"])
-    merged = ff5.merge(mom, on="date", how="inner", validate="one_to_one")
-    factor_columns = ["MKT", "SMB", "HML", "RMW", "CMA", "MOM", "RF"]
-    merged[factor_columns] = merged[factor_columns] / 100.0
-    return merged[["date", *factor_columns]]
+    factor_columns = ["MKT", "SMB", "HML", "RMW", "CMA", "RF"]
+    ff5[factor_columns] = ff5[factor_columns] / 100.0
+    return ff5[["date", *factor_columns]]
 
 
 def main() -> None:
