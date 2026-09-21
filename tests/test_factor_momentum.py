@@ -92,9 +92,7 @@ def test_time_series_weights_have_unit_gross():
 
 
 def test_cross_sectional_weights_are_market_neutral():
-    out = cross_sectional_factor_momentum(
-        _returns(), lookback=3, skip=0, n_long=1, n_short=1
-    )
+    out = cross_sectional_factor_momentum(_returns(), lookback=3, skip=0, n_long=1, n_short=1)
     weights = out["weight"].dropna()
     assert np.allclose(weights.sum(axis=1), 0.0)
     assert np.allclose(weights.abs().sum(axis=1), 1.0)
@@ -134,15 +132,11 @@ def test_persistence_table_and_suite():
         (lambda: trailing_compound_score(_returns(), lookback=0), "lookback"),
         (lambda: trailing_compound_score(_returns(), skip=-1), "skip"),
         (
-            lambda: cross_sectional_factor_momentum(
-                _returns(), n_long=3, n_short=2
-            ),
+            lambda: cross_sectional_factor_momentum(_returns(), n_long=3, n_short=2),
             "cannot exceed",
         ),
         (
-            lambda: newey_west_mean_t_stat(
-                pd.Series([0.1, 0.2, 0.3]), max_lag=-1
-            ),
+            lambda: newey_west_mean_t_stat(pd.Series([0.1, 0.2, 0.3]), max_lag=-1),
             "max_lag",
         ),
         (lambda: evaluate_strategy(pd.Series([], dtype=float)), "no observations"),
