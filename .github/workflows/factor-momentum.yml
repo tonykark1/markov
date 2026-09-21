@@ -28,9 +28,17 @@ jobs:
           python scripts/run_factor_momentum_panel.py
           data/openap_nonmomentum_factors.csv
           --output results/factor_momentum_broad
+      - name: Run out-of-sample PCA factor momentum tests
+        run: >-
+          python scripts/run_pca_factor_momentum.py
+          data/openap_nonmomentum_factors.csv
+          --output results/pca_factor_momentum
+          --signal-lookback 12
+          --refit-every 12
       - uses: actions/upload-artifact@v4
         with:
           name: factor-momentum-broad-results
           path: |
             results/factor_momentum_broad/
+            results/pca_factor_momentum/
             data/openap_nonmomentum_factor_metadata.csv
