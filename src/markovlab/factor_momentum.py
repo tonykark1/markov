@@ -64,9 +64,7 @@ def trailing_compound_score(
         raise ValueError("skip must be >= 0")
 
     lagged = x.shift(skip + 1)
-    return (1.0 + lagged).rolling(lookback, min_periods=lookback).apply(
-        np.prod, raw=True
-    ) - 1.0
+    return (1.0 + lagged).rolling(lookback, min_periods=lookback).apply(np.prod, raw=True) - 1.0
 
 
 def time_series_factor_momentum(
@@ -87,9 +85,7 @@ def time_series_factor_momentum(
     weights = raw.div(gross, axis=0)
     strategy = (weights * x).sum(axis=1, min_count=1)
     strategy.name = "ts_factor_momentum"
-    return pd.concat(
-        {"score": score, "weight": weights, "strategy": strategy}, axis=1
-    )
+    return pd.concat({"score": score, "weight": weights, "strategy": strategy}, axis=1)
 
 
 def cross_sectional_factor_momentum(
@@ -127,14 +123,10 @@ def cross_sectional_factor_momentum(
 
     strategy = (weights * x).sum(axis=1, min_count=1)
     strategy.name = "cs_factor_momentum"
-    return pd.concat(
-        {"score": score, "weight": weights, "strategy": strategy}, axis=1
-    )
+    return pd.concat({"score": score, "weight": weights, "strategy": strategy}, axis=1)
 
 
-def newey_west_mean_t_stat(
-    series: pd.Series, *, max_lag: int | None = None
-) -> tuple[float, float]:
+def newey_west_mean_t_stat(series: pd.Series, *, max_lag: int | None = None) -> tuple[float, float]:
     """Return HAC t-statistic and asymptotic two-sided p-value for a mean."""
     x = pd.Series(series, dtype=float).dropna().to_numpy()
     n = len(x)
@@ -164,9 +156,7 @@ def newey_west_mean_t_stat(
     return float(t_stat), float(p_value)
 
 
-def evaluate_strategy(
-    series: pd.Series, *, periods_per_year: int = 12
-) -> StrategyStats:
+def evaluate_strategy(series: pd.Series, *, periods_per_year: int = 12) -> StrategyStats:
     """Compute return, drawdown, hit-rate, and HAC significance statistics."""
     x = pd.Series(series, dtype=float).dropna()
     if x.empty:
@@ -179,14 +169,8 @@ def evaluate_strategy(
     mean = float(x.mean())
     vol = float(x.std(ddof=1)) if len(x) > 1 else float("nan")
     annualized_return = mean * periods_per_year
-    annualized_volatility = (
-        vol * sqrt(periods_per_year) if np.isfinite(vol) else float("nan")
-    )
-    sharpe = (
-        mean / vol * sqrt(periods_per_year)
-        if np.isfinite(vol) and vol > 0
-        else float("nan")
-    )
+    annualized_volatility = vol * sqrt(periods_per_year) if np.isfinite(vol) else float("nan")
+    sharpe = mean / vol * sqrt(periods_per_year) if np.isfinite(vol) and vol > 0 else float("nan")
     wealth = (1.0 + x).cumprod()
     cumulative_return = float(wealth.iloc[-1] - 1.0)
     drawdown = wealth / wealth.cummax() - 1.0
@@ -231,10 +215,7 @@ def factor_persistence_table(
                     else np.nan
                 ),
                 "sign_hit_rate": float(
-                    (
-                        np.sign(score.loc[valid, factor]) * x.loc[valid, factor]
-                        > 0
-                    ).mean()
+                    (np.sign(score.loc[valid, factor]) * x.loc[valid, factor] > 0).mean()
                 ),
             }
         )
@@ -259,9 +240,7 @@ def run_factor_momentum_suite(
     rows: list[dict[str, float | int | str]] = []
 
     for label, lookback, skip in specs:
-        ts = time_series_factor_momentum(x, lookback=lookback, skip=skip)[
-            "strategy"
-        ].iloc[:, 0]
+        ts = time_series_factor_momentum(x, lookback=lookback, skip=skip)["strategy"].iloc[:, 0]
         cs = cross_sectional_factor_momentum(
             x,
             lookback=lookback,
