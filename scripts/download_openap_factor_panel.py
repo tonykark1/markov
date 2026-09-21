@@ -25,11 +25,13 @@ def _momentum_like_signals(signal_doc: pd.DataFrame) -> set[str]:
     return set(doc.loc[mask, "Acronym"].astype(str))
 
 
-def download_panel(*, min_months: int = 120) -> tuple[pd.DataFrame, pd.DataFrame]:
+def download_panel(
+    *, min_months: int = 120, release: int | None = None
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     if min_months < 12:
         raise ValueError("min_months must be >= 12")
 
-    source = oap.OpenAP()
+    source = oap.OpenAP(release) if release is not None else oap.OpenAP()
     ports = source.dl_port("op", "pandas")
     signal_doc = source.dl_signal_doc("pandas")
 
@@ -77,17 +79,25 @@ def main() -> None:
         default=Path("data/openap_nonmomentum_factor_metadata.csv"),
     )
     parser.add_argument("--min-months", type=int, default=120)
+    parser.add_argument(
+        "--release",
+        type=int,
+        default=None,
+        help="Optional Open Asset Pricing release, e.g. 202410.",
+    )
     args = parser.parse_args()
 
-    panel, metadata = download_panel(min_months=args.min_months)
+    panel, metadata = download_panel(min_months=args.min_months, release=args.release)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.metadata.parent.mkdir(parents=True, exist_ok=True)
     panel.to_csv(args.output, index=False)
     metadata.to_csv(args.metadata, index=False)
 
+    release_text = str(args.release) if args.release is not None else "latest"
     print(
-        f"wrote {panel['factor'].nunique()} non-momentum factors and {len(panel)} factor-months; "
-        f"sample {panel['date'].min().date()} to {panel['date'].max().date()}"
+        f"release {release_text}: wrote {panel['factor'].nunique()} non-momentum factors and "
+        f"{len(panel)} factor-months; sample {panel['date'].min().date()} to "
+        f"{panel['date'].max().date()}"
     )
 
 
