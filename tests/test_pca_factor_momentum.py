@@ -34,9 +34,7 @@ def test_pca_weights_have_unit_gross_per_component() -> None:
     panel = _synthetic_panel(n_months=48, n_factors=6)
     train = panel_to_wide(panel).iloc[:36]
     for mode in ("covariance", "correlation"):
-        weights, explained, active = _pca_portfolio_weights(
-            train, mode=mode, max_components=4
-        )
+        weights, explained, active = _pca_portfolio_weights(train, mode=mode, max_components=4)
         assert weights.shape == (len(active), 4)
         np.testing.assert_allclose(np.abs(weights).sum(axis=0), 1.0)
         assert np.all(explained >= 0)
@@ -70,9 +68,7 @@ def test_current_return_does_not_change_current_pca_signal_or_weights() -> None:
     # Current returns should change P&L but cannot enter the PCA fit or trailing signal.
     assert not np.isclose(base.iloc[-1]["strategy_return"], altered.iloc[-1]["strategy_return"])
     assert base.iloc[-1]["n_active_factors"] == altered.iloc[-1]["n_active_factors"]
-    assert np.isclose(
-        base.iloc[-1]["explained_variance"], altered.iloc[-1]["explained_variance"]
-    )
+    assert np.isclose(base.iloc[-1]["explained_variance"], altered.iloc[-1]["explained_variance"])
 
 
 def test_pca_strategy_variants_and_summary_are_finite() -> None:
