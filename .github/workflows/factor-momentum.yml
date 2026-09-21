@@ -1,0 +1,29 @@
+name: factor-momentum
+
+on:
+  push:
+    branches:
+      - factor-momentum-test
+  workflow_dispatch:
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e .
+      - name: Download current Kenneth French factors
+        run: python scripts/download_french_factors.py --output data/french_factors_current.csv
+      - name: Run factor-momentum suite
+        run: >-
+          python scripts/run_factor_momentum.py
+          data/french_factors_current.csv
+          --output results/factor_momentum
+      - uses: actions/upload-artifact@v4
+        with:
+          name: factor-momentum-results
+          path: results/factor_momentum/
