@@ -71,9 +71,7 @@ def main() -> None:
     primary_label = "12-1"
     primary_lookback = 11
     primary_skip = 1
-    persistence = factor_persistence_table(
-        full, lookback=primary_lookback, skip=primary_skip
-    )
+    persistence = factor_persistence_table(full, lookback=primary_lookback, skip=primary_skip)
     persistence.to_csv(args.output / "persistence_12-1.csv")
 
     returns_out = pd.DataFrame(index=full.index)
@@ -81,9 +79,9 @@ def main() -> None:
         ("with_MOM", full),
         ("without_MOM", full.drop(columns="MOM") if "MOM" in full else full),
     ):
-        ts = time_series_factor_momentum(
-            data, lookback=primary_lookback, skip=primary_skip
-        )["strategy"].iloc[:, 0]
+        ts = time_series_factor_momentum(data, lookback=primary_lookback, skip=primary_skip)[
+            "strategy"
+        ].iloc[:, 0]
         cs = cross_sectional_factor_momentum(
             data,
             lookback=primary_lookback,
